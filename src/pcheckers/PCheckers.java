@@ -6,6 +6,8 @@
 package pcheckers;
 
 import com.jfoenix.controls.JFXButton;
+import com.sun.javafx.scene.control.SelectedCellsMap;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.Animation;
@@ -14,6 +16,8 @@ import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.PathTransition;
 import javafx.animation.RotateTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -22,6 +26,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.Glow;
+import javafx.scene.effect.Shadow;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -33,6 +40,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextBoundsType;
@@ -44,6 +52,121 @@ import javafx.util.Duration;
  * @author piker
  */
 public class PCheckers extends Application {
+
+    public static ImageView selected = null;
+    public static ImageView destination = null;
+    public static boolean setPlay = true;
+    public static FadeTransition selectedFade = new FadeTransition();
+    public static Image blackBead = new Image("black.png");
+    public static Image redBead = new Image("red.png");
+    public static ImageView[] ways = new ImageView[2];
+    public static ArrayList<ImageView> beads = new ArrayList<ImageView>();
+    public static ArrayList<ImageView> tiles = new ArrayList<ImageView>();
+    public static int tileSize;
+    public static int tileSpace;
+    public static FadeTransition selectedTileF1 = new FadeTransition();
+    public static FadeTransition selectedTileF2 = new FadeTransition();
+    public static int redBeadsNumber = 12;
+    public static int blackBeadsNumber = 12;
+
+    private static void moveSelected(ImageView dest) {
+//        TranslateTransition goTo = new TranslateTransition(Duration.seconds(0.5), selected);
+//        goTo.setByX(dest.getX() - selected.getLayoutX());
+//        goTo.setByY(dest.getY() - selected.getLayoutY());
+//        goTo.setCycleCount(1);
+//        goTo.play();
+//        selected.setX(dest.getX());
+//        selected.setY(dest.getY());
+        if (selected.getImage().equals(redBead) && setPlay) {
+            attack(dest);
+            selected.setLayoutX(dest.getX());
+            selected.setLayoutY(dest.getY());
+//        goTo.setOnFinished(a -> {
+//
+//            clearSelections();
+//        });
+//        ScaleTransition goToScale = new ScaleTransition(Duration.seconds(0.25), selected);
+//        goToScale.setFromX(1);
+//        goToScale.setFromY(1);
+//        goToScale.setToX(1.25);
+//        goToScale.setToY(1.25);
+//        goToScale.setCycleCount(2);
+//        goToScale.setAutoReverse(true);
+//        goToScale.play();
+            clearSelections();
+            setPlay = false;
+        } else {
+            if (!selected.getImage().equals(redBead) && !setPlay) {
+                attack(dest);
+                selected.setLayoutX(dest.getX());
+                selected.setLayoutY(dest.getY());
+                clearSelections();
+                setPlay = true;
+
+            }
+        }
+    }
+
+    private static void clearSelections() {
+
+        selectedTileF1.stop();
+        selectedTileF1.setNode(ways[0]);
+        selectedTileF1.setCycleCount(2);
+        selectedTileF1.setDuration(Duration.seconds(0.2));
+        selectedTileF1.play();
+        selectedTileF2.stop();
+        selectedTileF2.setNode(ways[1]);
+        selectedTileF2.setCycleCount(2);
+        selectedTileF2.setDuration(Duration.seconds(0.2));
+        selectedTileF2.play();
+        selectedFade.stop();
+        selectedFade.setCycleCount(2);
+        selectedFade.setDuration(Duration.seconds(0.2));
+        selectedFade.play();
+        selected = null;
+        ways[0] = null;
+        ways[1] = null;
+    }
+
+    private static boolean checkIsNotOurs(double x, double y) {
+        for (int i = 0; i < beads.size(); i++) {
+            if (beads.get(i).getBoundsInParent().contains(x + 1, y + 1) && !beads.get(i).getImage().equals(selected.getImage())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void attack(ImageView dest) {
+
+        for (int i = 0; i < beads.size(); i++) {
+            boolean eq = !selected.getImage().equals(beads.get(i).getImage());
+            double x = ((dest.getX() + selected.getLayoutX()) / 2) + (tileSize / 2);
+            double y = ((dest.getY() + selected.getLayoutY()) / 2) + (tileSize / 2);
+            boolean eq2 = beads.get(i).getBoundsInParent().contains(x, y);
+            System.out.println(eq2);
+            System.out.println(eq);
+            System.out.println(x + "  " + y + "  " + beads.get(i).getLayoutX() + 10 + "  " + beads.get(i).getLayoutY() + 10);
+            if (eq && eq2) {
+                System.out.println("something");
+                removeBead(i);
+            }
+        }
+    }
+
+    private static void removeBead(int i) {
+        beads.get(i).setVisible(false);
+        if (beads.get(i).getImage().equals(redBead)) {
+            redBeadsNumber--;
+        } else {
+            blackBeadsNumber--;
+        }
+        beads.remove(i);
+    }
+
+    private static void endGame(Stage ps) {
+        
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -76,12 +199,12 @@ public class PCheckers extends Application {
     public static void makeBoard(Stage ps) {
         Group root = new Group();
         ps.getScene().setRoot(root);
-        
-        int list = (ps.getScene().getHeight()<ps.getScene().getWidth()) ? (int)ps.getScene().getHeight() : (int)ps.getScene().getWidth();
-        int tileSize=(list-8*2)/8;
-        int tileSpace=2;
-        int initX=0;
-        int initY=0;
+
+        int list = (ps.getScene().getHeight() < ps.getScene().getWidth()) ? (int) ps.getScene().getHeight() : (int) ps.getScene().getWidth();
+        tileSize = (list - 8 * 2) / 8;
+        tileSpace = 2;
+        int initX = 0;
+        int initY = 0;
         Image whiteTile = new Image("white_tile.png");
         Image blackTile = new Image("black_tile.png");
         for (int i = 0; i < 8; i++) {
@@ -91,10 +214,252 @@ public class PCheckers extends Application {
                 temp.setY(initY + i * tileSize + tileSpace * i);
                 temp.setFitHeight(tileSize);
                 temp.setFitWidth(tileSize);
+                temp.setOnMouseClicked(a -> {
+                    if (selected != null && checkMove((ImageView) a.getPickResult().getIntersectedNode())) {
+                        moveSelected((ImageView) a.getPickResult().getIntersectedNode());
+                        if (redBeadsNumber == 0 || blackBeadsNumber == 0) {
+                            endGame(ps);
+                        }
+                    } else {
+                        clearSelections();
+                    }
+                });
                 root.getChildren().add(temp);
+                tiles.add(temp);
+            }
+        }
+        JFXButton back = new JFXButton("back !");
+        back.setTextFill(Color.RED);
+        back.setButtonType(JFXButton.ButtonType.RAISED);
+        back.setFont(Font.loadFont("file:resources/fonts/Stya.ttf", 20));
+        RotateTransition rt = new RotateTransition(Duration.millis(3000), back);
+        rt.setFromAngle(-8);
+        rt.setToAngle(8);
+        rt.setCycleCount(-1);
+        rt.setAutoReverse(true);
+        rt.play();
+        root.getChildren().add(back);
+        back.setLayoutX(20);
+        back.setLayoutY(list);
+        back.setOnMouseClicked(e -> {
+            new AnimationTimer() {
+                long last = 0;
+
+                @Override
+                public void handle(long l) {
+                    if (last == 0) {
+                        last = l;
+                    } else {
+                        if (l - last > 2000000000) {
+                            this.stop();
+                        }
+                    }
+                }
+            }.start();
+            makeTypeOfPlayerWindow(ps);
+            clearSelections();
+
+        });
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 4; j++) {
+                ImageView temp1 = new ImageView(blackBead);
+                ImageView temp2 = new ImageView(redBead);
+                temp1.setLayoutX((((i + 1) % 2) * tileSize) + (((i + 1) % 2) * tileSpace) + (2 * (j) * tileSize) + (2 * (j) * tileSpace));
+                temp1.setLayoutY(i * tileSize + ((i) * tileSpace));
+                temp2.setLayoutX((((i) % 2) * tileSize) + (((i) % 2) * tileSpace) + (2 * (j) * tileSize) + (2 * (j) * tileSpace));
+                temp2.setLayoutY((i + 5) * tileSize + ((i + 5) * tileSpace));
+                temp1.setFitHeight(tileSize);
+                temp1.setFitWidth(tileSize);
+                temp2.setFitHeight(tileSize);
+                temp2.setFitWidth(tileSize);
+                TranslateTransition tt = new TranslateTransition(Duration.millis(2000), temp2);
+                tt.setFromX(-1 * j * 2 * tileSize);
+                tt.setToX(temp2.getX());
+                TranslateTransition tt2 = new TranslateTransition(Duration.millis(2000), temp1);
+                tt2.setFromX(-1 * j * 2 * tileSize);
+                tt2.setToX(temp1.getX());
+                temp1.setOnMouseEntered(a -> {
+                    temp1.setEffect(new Shadow(10, Color.YELLOW));
+                });
+                temp1.setOnMouseExited(a -> {
+                    temp1.setEffect(null);
+                });
+                temp2.setOnMouseEntered(a -> {
+                    temp2.setEffect(new Shadow(10, Color.YELLOW));
+                });
+                temp2.setOnMouseExited(a -> {
+                    temp2.setEffect(null);
+                });
+                temp1.setOnMouseClicked(b -> {
+                    if (selected == null) {
+                        selected = (ImageView) b.getPickResult().getIntersectedNode();
+                        addWays();
+                        startSelectedFade();
+                    } else {
+                        clearSelections();
+                    }
+                });
+                temp2.setOnMouseClicked(b -> {
+                    if (selected == null) {
+                        selected = (ImageView) b.getPickResult().getIntersectedNode();
+                        addWays();
+                        startSelectedFade();
+                    } else {
+                        clearSelections();
+                    }
+                });
+                tt.play();
+                tt2.play();
+                root.getChildren().addAll(temp1, temp2);
+                beads.add(temp2);
+                beads.add(temp1);
+
+            }
+        }
+    }
+
+    public static void startSelectedFade() {
+        selectedFade.setNode(selected);
+        selectedFade.setFromValue(1.0);
+        selectedFade.setToValue(0.5);
+        selectedFade.setCycleCount(-1);
+        selectedFade.setAutoReverse(true);
+        selectedFade.setDuration(Duration.seconds(2.0));
+        selectedFade.play();
+        if (ways[0] != null) {
+            selectedTileF1.setNode(ways[0]);
+            selectedTileF1.setFromValue(1.0);
+            selectedTileF1.setToValue(0.0);
+            selectedTileF1.setCycleCount(-1);
+            selectedTileF1.setAutoReverse(true);
+            selectedTileF1.setDuration(Duration.seconds(1.0));
+            selectedTileF1.play();
+        }
+        if (ways[1] != null) {
+            selectedTileF2.setNode(ways[1]);
+            selectedTileF2.setFromValue(1.0);
+            selectedTileF2.setToValue(0.0);
+            selectedTileF2.setCycleCount(-1);
+            selectedTileF2.setAutoReverse(true);
+            selectedTileF2.setDuration(Duration.seconds(1.0));
+            selectedTileF2.play();
+        }
+    }
+
+    public static boolean checkMove(ImageView selectedTile) {
+        if (selectedTile != ways[0] && selectedTile != ways[1]) {
+            return false;
+        }
+        return true;
+    }
+
+    public static void addWays() {
+        if (selected.getImage().equals(redBead)) {
+            double x = selected.getLayoutX() + (1.5 * tileSize);
+            double y = selected.getLayoutY() - (tileSize / 2);
+
+            //bala rast !
+            if (!checkTile(x, y)) {
+                for (int i = 0; i < tiles.size(); i++) {
+                    if (tiles.get(i).contains(x, y)) {
+                        ways[0] = tiles.get(i);
+                        break;
+                    }
+                }
+            } else {
+                double x2 = selected.getLayoutX() + tileSize * 2 + tileSize / 2;
+                double y2 = selected.getLayoutY() - (1.5 * tileSize);
+                if (!checkTile(x2, y2) && checkIsNotOurs(x, y)) {
+                    for (int i = 0; i < tiles.size(); i++) {
+                        if (tiles.get(i).contains(selected.getLayoutX() + tileSize * 2 + tileSize / 2, selected.getLayoutY() - (1.5 * tileSize))) {
+                            ways[0] = tiles.get(i);
+                            break;
+                        }
+                    }
+                }
+            }
+            //bala chap 
+            x = selected.getLayoutX() - (0.5 * tileSize);
+            y = selected.getLayoutY() - (tileSize / 2);
+            if (!checkTile(x, y)) {
+                for (int i = 0; i < tiles.size(); i++) {
+                    if (tiles.get(i).contains(x, y)) {
+                        ways[1] = tiles.get(i);
+                        break;
+                    }
+                }
+            } else {
+                double x2 = selected.getLayoutX() - (1.5 * tileSize);
+                double y2 = selected.getLayoutY() - (1.5 * tileSize);
+                if (!checkTile(x2, y2) && checkIsNotOurs(x, y)) {
+                    for (int i = 0; i < tiles.size(); i++) {
+                        if (tiles.get(i).contains(x2, y2)) {
+                            ways[1] = tiles.get(i);
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+
+            //for black 
+            //paiin rast ! 
+            double x = selected.getLayoutX() + (1.5 * tileSize);
+            double y = selected.getLayoutY() + (1.5 * tileSize);
+            if (!checkTile(x, y)) {
+                for (int i = 0; i < tiles.size(); i++) {
+
+                    if (tiles.get(i).contains(x, y)) {
+                        ways[0] = tiles.get(i);
+                        break;
+                    }
+                }
+            } else {
+                double x2 = selected.getLayoutX() + (2.5 * tileSize);
+                double y2 = selected.getLayoutY() + (2.5 * tileSize);
+                if (!checkTile(x2, y2)) {
+                    for (int i = 0; i < tiles.size(); i++) {
+                        if (tiles.get(i).contains(x2, y2) && checkIsNotOurs(x, y)) {
+                            ways[0] = tiles.get(i);
+                            break;
+                        }
+                    }
+                }
+            }
+            //pain chap
+            x = selected.getLayoutX() - (0.5 * tileSize);
+            y = selected.getLayoutY() + (1.5 * tileSize);
+
+            if (!checkTile(x, y)) {
+                for (int i = 0; i < tiles.size(); i++) {
+                    if (tiles.get(i).contains(x, y)) {
+                        ways[1] = tiles.get(i);
+                        break;
+                    }
+                }
+            } else {
+                double x2 = selected.getLayoutX() - (1.5 * tileSize);
+                double y2 = selected.getLayoutY() + (2.5 * tileSize);
+                if (!checkTile(x2, y2)) {
+                    for (int i = 0; i < tiles.size(); i++) {
+                        if (tiles.get(i).contains(x2, y2) && checkIsNotOurs(x, y)) {
+                            ways[1] = tiles.get(i);
+                            break;
+                        }
+                    }
+                }
             }
         }
 
+    }
+
+    public static boolean checkTile(double x, double y) {
+        for (int i = 0; i < beads.size(); i++) {
+            if (beads.get(i).getBoundsInParent().contains(x + 1, y + 1)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void makeMenu(Stage primaryStage) {
@@ -103,7 +468,7 @@ public class PCheckers extends Application {
         rootFade.setFromValue(0.0);
         rootFade.setToValue(1.0);
         rootFade.play();
-        Scene menuScene = new Scene(root, 500, 500);
+        Scene menuScene = new Scene(root, 500, 550);
         primaryStage.setScene(menuScene);
         primaryStage.setMinHeight(400);
         primaryStage.setMinWidth(400);
