@@ -68,7 +68,8 @@ public class PCheckers extends Application {
     public static FadeTransition selectedTileF2 = new FadeTransition();
     public static int redBeadsNumber = 12;
     public static int blackBeadsNumber = 12;
-
+    public static boolean AI = false;
+    public static AI mainAI ;
     private static void moveSelected(ImageView dest) {
 //        TranslateTransition goTo = new TranslateTransition(Duration.seconds(0.5), selected);
 //        goTo.setByX(dest.getX() - selected.getLayoutX());
@@ -165,7 +166,7 @@ public class PCheckers extends Application {
     }
 
     private static void endGame(Stage ps) {
-        
+
     }
 
     @Override
@@ -545,7 +546,8 @@ public class PCheckers extends Application {
 
             });
             onePlayer.setOnMouseClicked(h -> {
-                makeBoard(primaryStage);
+                AI= true;
+                mainAI = new AI();
             });
             Text twoPlayer = new Text("2 Player");
             twoPlayer.setFont(Font.loadFont("file:resources/fonts/Stya.ttf", 50));
@@ -563,7 +565,9 @@ public class PCheckers extends Application {
                 twoPlayer.setFill(Color.BLACK);
             });
             twoPlayer.setBoundsType(TextBoundsType.VISUAL);
-
+            twoPlayer.setOnMouseClicked(z -> {
+                makeBoard(primaryStage);
+            });
             playerBox.getChildren().addAll(onePlayer, twoPlayer);
             root.getChildren().add(playerBox);
 
